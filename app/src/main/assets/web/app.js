@@ -206,12 +206,12 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
     uploadStatus.style.color = '#666';
     
     try {
-        const formData = new FormData();
-        formData.append('file', file);
+        const text = await file.text();
         
         const response = await fetch('/api/upload-service-account', {
             method: 'POST',
-            body: formData
+            body: text,
+            headers: { 'Content-Type': 'text/plain' }
         });
         
         const data = await response.json();

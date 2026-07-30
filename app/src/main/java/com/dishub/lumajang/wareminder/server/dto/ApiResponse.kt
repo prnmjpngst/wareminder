@@ -19,6 +19,7 @@ data class StatsResponse(
     val expiredVehicles: Int,
     val expiringSoon: Int,
     val activeVehicles: Int,
+    val sentToday: Int = 0,
     val serviceRunning: Boolean,
     val lastSync: Long,
     val lastCheck: Long,

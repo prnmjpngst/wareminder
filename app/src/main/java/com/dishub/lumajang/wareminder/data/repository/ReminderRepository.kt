@@ -185,7 +185,7 @@ class ReminderRepository @Inject constructor(
     suspend fun getSentCount(since: Long): Int = logDao.countSentSince(since)
     suspend fun getFailedCount(): Int = logDao.countByStatus("FAILED")
 
-    fun getStats(): Map<String, Any> {
+    suspend fun getStats(): Map<String, Any> {
         val now = Calendar.getInstance()
         val startOfDay = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
@@ -194,12 +194,14 @@ class ReminderRepository @Inject constructor(
         val totalVehicles = cachedVehicles.size
         val expiredVehicles = cachedVehicles.count { it.isExpired() }
         val expiringSoon = getEligibleVehicles().size
+        val sentToday = getSentCount(startOfDay.timeInMillis)
 
         return mapOf(
             "totalVehicles" to totalVehicles,
             "expiredVehicles" to expiredVehicles,
             "expiringSoon" to expiringSoon,
             "activeVehicles" to (totalVehicles - expiredVehicles),
+            "sentToday" to sentToday,
             "serviceRunning" to isServiceRunning(),
             "lastSync" to lastSyncTime,
             "lastCheck" to lastCheckTime,

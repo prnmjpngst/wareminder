@@ -77,6 +77,7 @@ class VehicleRoutes @Inject constructor(
                     expiredVehicles = stats["expiredVehicles"] as? Int ?: 0,
                     expiringSoon = stats["expiringSoon"] as? Int ?: 0,
                     activeVehicles = stats["activeVehicles"] as? Int ?: 0,
+                    sentToday = stats["sentToday"] as? Int ?: 0,
                     serviceRunning = stats["serviceRunning"] as? Boolean ?: false,
                     lastSync = stats["lastSync"] as? Long ?: 0,
                     lastCheck = stats["lastCheck"] as? Long ?: 0,
