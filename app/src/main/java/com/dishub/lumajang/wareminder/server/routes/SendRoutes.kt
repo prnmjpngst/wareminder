@@ -25,26 +25,31 @@ class SendRoutes @Inject constructor(
 
             post("all") {
                 withContext(Dispatchers.IO) {
-                    repository.syncFromSheets()
+                    repository.syncFromAppScript()
                     val eligible = repository.getEligibleVehicles()
                     val batch = eligible.take(repository.maxPerRun)
                     var sent = 0
                     var failed = 0
 
-                    for ((index, vehicle) in batch.withIndex()) {
+                    for (vehicle in batch) {
                         try {
-                            waIntentSender.send(vehicle)
-                            Thread.sleep(1500)
+                            val message = repository.buildMessage(vehicle)
+                            waIntentSender.sendOpenChat(vehicle)
+                            Thread.sleep(3000)
 
                             if (WaAutoSendService.hasInstance()) {
-                                WaAutoSendService.sendWithAutoClick {}
+                                WaAutoSendService.sendWithTyping(message)
                             }
+
+                            // Wait for typing to complete
+                            Thread.sleep((message.length * 150L).coerceAtLeast(5000))
 
                             repository.markSent(vehicle)
                             sent++
 
-                            if (index < batch.size - 1) {
-                                Thread.sleep((10_000L..40_000L).random())
+                            // Delay between messages (30s)
+                            if (sent < batch.size) {
+                                Thread.sleep(30_000L)
                             }
                         } catch (e: Exception) {
                             repository.markFailed(vehicle, e.message ?: "Error")
@@ -68,14 +73,15 @@ class SendRoutes @Inject constructor(
                     return@post
                 }
 
-                val vehicle = repository.getCachedVehicles().find { it.rowIndex == row }
+                val vehicle = repository.getCachedVehicles().find { it.row == row }
                 if (vehicle == null) {
                     call.respond(HttpStatusCode.NotFound, ApiResponse<Any>(success = false, error = "Vehicle not found"))
                     return@post
                 }
 
                 try {
-                    waIntentSender.send(vehicle)
+                    val message = repository.buildMessage(vehicle)
+                    waIntentSender.sendOpenChat(vehicle)
                     repository.markSent(vehicle)
                     call.respond(ApiResponse(success = true, data = vehicle))
                 } catch (e: Exception) {
@@ -86,7 +92,7 @@ class SendRoutes @Inject constructor(
 
             post("sync") {
                 withContext(Dispatchers.IO) {
-                    val result = repository.syncFromSheets()
+                    val result = repository.syncFromAppScript()
                     if (result.isSuccess) {
                         call.respond(ApiResponse(success = true, data = mapOf("count" to result.getOrNull()?.size)))
                     } else {

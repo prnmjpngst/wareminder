@@ -1,33 +1,29 @@
 package com.dishub.lumajang.wareminder.data.repository
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import com.dishub.lumajang.wareminder.data.db.LogDao
 import com.dishub.lumajang.wareminder.data.db.SendLog
-import com.dishub.lumajang.wareminder.data.sheets.SheetsApi
+import com.dishub.lumajang.wareminder.data.sheets.AppsScriptApi
 import com.dishub.lumajang.wareminder.data.sheets.Vehicle
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ReminderRepository @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val sheetsApi: SheetsApi,
+    private val appsScriptApi: AppsScriptApi,
     private val logDao: LogDao
 ) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("reminder_prefs", Context.MODE_PRIVATE)
 
-    var spreadsheetId: String
-        get() = prefs.getString(SPREADSHEET_ID, "") ?: ""
-        set(value) = prefs.edit().putString(SPREADSHEET_ID, value).apply()
+    var appsScriptUrl: String
+        get() = prefs.getString(SCRIPT_URL, "") ?: ""
+        set(value) = prefs.edit().putString(SCRIPT_URL, value).apply()
 
     var windowStartDay: Int
         get() = prefs.getInt(WINDOW_START, 3)
@@ -57,110 +53,67 @@ class ReminderRepository @Inject constructor(
         get() = prefs.getLong(LAST_SYNC, 0)
         set(value) = prefs.edit().putLong(LAST_SYNC, value).apply()
 
-    // Cached vehicles from last sync
     private var cachedVehicles: List<Vehicle> = emptyList()
+    private var cachedStats: AppsScriptApi.ScriptStats? = null
 
     fun isServiceRunning(): Boolean = prefs.getBoolean(SERVICE_RUNNING, false)
-
     fun setServiceRunning(running: Boolean) {
         prefs.edit().putBoolean(SERVICE_RUNNING, running).apply()
     }
 
-    suspend fun syncFromSheets(): Result<List<Vehicle>> {
-        if (spreadsheetId.isBlank()) return Result.failure(Exception("Spreadsheet ID not configured"))
-        if (!sheetsApi.isAvailable()) return Result.failure(Exception("Google Sheets not configured (missing service_account.json)"))
-        return try {
-            val vehicles = sheetsApi.fetchAllVehicles(spreadsheetId)
-            cachedVehicles = vehicles
+    suspend fun syncFromAppScript(): Result<List<Vehicle>> {
+        if (appsScriptUrl.isBlank()) return Result.failure(Exception("Apps Script URL not configured"))
+        val result = appsScriptApi.fetchAll(appsScriptUrl)
+        if (result.isSuccess) {
+            cachedVehicles = result.getOrDefault(emptyList())
             lastSyncTime = System.currentTimeMillis()
-            Result.success(vehicles)
-        } catch (e: Exception) {
-            Result.failure(e)
         }
+        return result
     }
 
     fun getCachedVehicles(): List<Vehicle> = cachedVehicles
 
-    /**
-     * Find vehicles within the expiry window (H-{windowStart} to H-{windowEnd}).
-     * Parses TAHUN, BULAN, TANGGAL to compute days until expiry.
-     */
     fun getEligibleVehicles(vehicles: List<Vehicle> = cachedVehicles): List<Vehicle> {
-        val now = Calendar.getInstance()
         return vehicles.filter { v ->
-            if (v.isExpired() || v.nomorHP.isBlank()) return@filter false
-            val sisaHari = hitungSisaHari(v.tahun, v.bulan, v.tanggal)
-            sisaHari != null && sisaHari <= windowStartDay && sisaHari >= windowEndDay
+            if (v.isExpired || v.noHp.isBlank()) return@filter false
+            val sisaHari = v.countDaysUntilExpiry() ?: return@filter false
+            sisaHari <= windowStartDay && sisaHari >= windowEndDay
         }
     }
 
-    private fun hitungSisaHari(tahun: String, bulan: String, tanggal: String): Int? {
-        val monthMap = mapOf(
-            "Januari" to 0, "Februari" to 1, "Maret" to 2, "April" to 3,
-            "Mei" to 4, "Juni" to 5, "Juli" to 6, "Agustus" to 7,
-            "September" to 8, "Oktober" to 9, "November" to 10, "Desember" to 11,
-            "Jan" to 0, "Feb" to 1, "Mar" to 2, "Apr" to 3,
-            "Mei" to 4, "Jun" to 5, "Jul" to 6, "Agu" to 7,
-            "Sep" to 8, "Okt" to 9, "Nov" to 10, "Des" to 11
-        )
-        val year = tahun.toIntOrNull() ?: return null
-        val month = monthMap[bulan.trim().lowercase().replaceFirstChar { it.uppercase() }] ?: return null
-        val day = tanggal.toIntOrNull() ?: return null
-        val cal = Calendar.getInstance()
-        val now = Calendar.getInstance()
-        cal.set(year, month, day, 0, 0, 0)
-        cal.set(Calendar.MILLISECOND, 0)
-        now.set(Calendar.HOUR_OF_DAY, 0)
-        now.set(Calendar.MINUTE, 0)
-        now.set(Calendar.SECOND, 0)
-        now.set(Calendar.MILLISECOND, 0)
-        val diff = cal.timeInMillis - now.timeInMillis
-        return (diff / (1000 * 60 * 60 * 24)).toInt()
-    }
-
     fun buildMessage(v: Vehicle): String = buildString {
+        val formatted = v.formatTanggalIndonesia()
         appendLine("*DISHUB KAB. LUMAJANG*")
         appendLine()
-        appendLine("*MASA BERLAKU (KIR) BERAKHIR ${v.hari}, ${v.tanggal} ${v.bulan} ${v.tahun}.*")
+        appendLine("*MASA BERLAKU (KIR) BERAKHIR $formatted.*")
         appendLine("Identitas Kendaraan:")
-        appendLine("No. Kendaraan : *${v.nomorKendaraan}*")
-        appendLine("No. Uji       : *${v.nomorUji}*")
-        appendLine("No. Rangka    : *${v.nomorRangka}*")
-        appendLine("No. Mesin     : *${v.nomorMesin}*")
-        appendLine("Identitas Pemilik:")
-        appendLine("Atas Nama     : *${v.namaPemilik}*")
-        appendLine("Alamat        : *${v.alamat}*")
-        appendLine()
-        appendLine("*MASA BERLAKU (KIR) BERAKHIR ${v.hari}, ${v.tanggal} ${v.bulan} ${v.tahun}.*")
-        appendLine("Identitas Kendaraan:")
-        appendLine("No. Kendaraan : *${v.nomorKendaraan}*")
-        appendLine("No. Uji       : *${v.nomorUji}*")
-        appendLine("No. Rangka    : *${v.nomorRangka}*")
-        appendLine("No. Mesin     : *${v.nomorMesin}*")
+        appendLine("No. Kendaraan : *${v.noPolisi}*")
+        appendLine("No. Uji       : *${v.noUji}*")
+        appendLine("No. Rangka    : *${v.noRangka}*")
+        appendLine("No. Mesin     : *${v.noMesin}*")
         appendLine("Identitas Pemilik:")
         appendLine("Atas Nama     : *${v.namaPemilik}*")
         appendLine("Alamat        : *${v.alamat}*")
         appendLine()
         appendLine("*JANGAN LUPA UJIKAN KENDARAAN ANDA*")
-        appendLine()
-        appendLine("> _Sent via WA Reminder Dishub_")
     }
 
-    fun buildWaIntent(v: Vehicle): Intent {
-        val message = buildMessage(v)
-        val uri = "https://wa.me/${v.nomorHPClean}?text=${Uri.encode(message)}"
-        return Intent(Intent.ACTION_VIEW, Uri.parse(uri))
+    fun buildWaIntentWithoutText(v: Vehicle): Intent {
+        val uri = "https://wa.me/${v.noHpClean}"
+        return Intent(Intent.ACTION_VIEW, Uri.parse(uri)).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
     }
 
     suspend fun markSent(v: Vehicle) {
         try {
-            sheetsApi.markDone(spreadsheetId, v.rowIndex)
+            appsScriptApi.markDone(appsScriptUrl, v.row)
         } catch (_: Exception) {}
         logDao.insert(
             SendLog(
-                nomorKendaraan = v.nomorKendaraan,
+                nomorKendaraan = v.noPolisi,
                 namaPemilik = v.namaPemilik,
-                nomorHP = v.nomorHP,
+                nomorHP = v.noHp,
                 status = "SENT"
             )
         )
@@ -169,9 +122,9 @@ class ReminderRepository @Inject constructor(
     suspend fun markFailed(v: Vehicle, error: String) {
         logDao.insert(
             SendLog(
-                nomorKendaraan = v.nomorKendaraan,
+                nomorKendaraan = v.noPolisi,
                 namaPemilik = v.namaPemilik,
-                nomorHP = v.nomorHP,
+                nomorHP = v.noHp,
                 status = "FAILED",
                 error = error
             )
@@ -183,35 +136,31 @@ class ReminderRepository @Inject constructor(
 
     suspend fun getLogCount(): Int = logDao.count()
     suspend fun getSentCount(since: Long): Int = logDao.countSentSince(since)
-    suspend fun getFailedCount(): Int = logDao.countByStatus("FAILED")
 
     suspend fun getStats(): Map<String, Any> {
-        val now = Calendar.getInstance()
-        val startOfDay = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        val startOfDay = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
         }
         val totalVehicles = cachedVehicles.size
-        val expiredVehicles = cachedVehicles.count { it.isExpired() }
-        val expiringSoon = getEligibleVehicles().size
+        val eligible = getEligibleVehicles().size
         val sentToday = getSentCount(startOfDay.timeInMillis)
 
         return mapOf(
             "totalVehicles" to totalVehicles,
-            "expiredVehicles" to expiredVehicles,
-            "expiringSoon" to expiringSoon,
-            "activeVehicles" to (totalVehicles - expiredVehicles),
+            "expiringSoon" to eligible,
             "sentToday" to sentToday,
             "serviceRunning" to isServiceRunning(),
             "lastSync" to lastSyncTime,
             "lastCheck" to lastCheckTime,
-            "spreadsheetConfigured" to spreadsheetId.isNotBlank(),
-            "sheetsAvailable" to sheetsApi.isAvailable()
+            "appsScriptConfigured" to appsScriptUrl.isNotBlank()
         )
     }
 
     companion object {
-        private const val SPREADSHEET_ID = "spreadsheet_id"
+        private const val SCRIPT_URL = "apps_script_url"
         private const val WINDOW_START = "window_start"
         private const val WINDOW_END = "window_end"
         private const val SCHEDULE_START_HOUR = "schedule_start_hour"

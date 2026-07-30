@@ -1,30 +1,21 @@
 package com.dishub.lumajang.wareminder.server.routes
 
 import com.dishub.lumajang.wareminder.data.repository.ReminderRepository
-import com.dishub.lumajang.wareminder.data.sheets.Vehicle
 import com.dishub.lumajang.wareminder.server.dto.ApiResponse
 import com.dishub.lumajang.wareminder.server.dto.PaginatedResponse
 import com.dishub.lumajang.wareminder.server.dto.StatsResponse
-import com.google.gson.Gson
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.put
-import io.ktor.server.routing.delete
 import io.ktor.server.routing.route
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class VehicleRoutes @Inject constructor(
-    private val repository: ReminderRepository,
-    private val gson: Gson
+    private val repository: ReminderRepository
 ) {
     fun register(routing: Routing) {
         routing.route("/api/vehicles") {
@@ -36,9 +27,9 @@ class VehicleRoutes @Inject constructor(
 
                 val filtered = if (search.isNotBlank()) {
                     vehicles.filter {
-                        it.nomorKendaraan.lowercase().contains(search) ||
+                        it.noPolisi.lowercase().contains(search) ||
                         it.namaPemilik.lowercase().contains(search) ||
-                        it.nomorHP.contains(search)
+                        it.noHp.contains(search)
                     }
                 } else vehicles
 
@@ -60,7 +51,7 @@ class VehicleRoutes @Inject constructor(
                 val row = call.parameters["row"]?.toIntOrNull() ?: return@get call.respond(
                     HttpStatusCode.BadRequest, ApiResponse<Any>(success = false, error = "Invalid row")
                 )
-                val vehicle = repository.getCachedVehicles().find { it.rowIndex == row }
+                val vehicle = repository.getCachedVehicles().find { it.row == row }
                 if (vehicle == null) {
                     call.respond(HttpStatusCode.NotFound, ApiResponse<Any>(success = false, error = "Not found"))
                 } else {
@@ -74,15 +65,12 @@ class VehicleRoutes @Inject constructor(
             call.respond(
                 StatsResponse(
                     totalVehicles = stats["totalVehicles"] as? Int ?: 0,
-                    expiredVehicles = stats["expiredVehicles"] as? Int ?: 0,
                     expiringSoon = stats["expiringSoon"] as? Int ?: 0,
-                    activeVehicles = stats["activeVehicles"] as? Int ?: 0,
                     sentToday = stats["sentToday"] as? Int ?: 0,
                     serviceRunning = stats["serviceRunning"] as? Boolean ?: false,
                     lastSync = stats["lastSync"] as? Long ?: 0,
                     lastCheck = stats["lastCheck"] as? Long ?: 0,
-                    spreadsheetConfigured = stats["spreadsheetConfigured"] as? Boolean ?: false,
-                    sheetsAvailable = stats["sheetsAvailable"] as? Boolean ?: false
+                    appsScriptConfigured = stats["appsScriptConfigured"] as? Boolean ?: false
                 )
             )
         }

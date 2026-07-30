@@ -53,7 +53,7 @@ class ReminderForegroundService : LifecycleService() {
 
             // Sync data on start
             withContext(Dispatchers.IO) {
-                repository.syncFromSheets()
+                repository.syncFromAppScript()
             }
 
             updateNotification("Layanan berjalan")

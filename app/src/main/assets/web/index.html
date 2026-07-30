@@ -56,7 +56,7 @@
 
                 <div class="card">
                     <h3>Aksi Cepat</h3>
-                    <button id="btn-sync" class="btn btn-primary">🔄 Sync dari Google Sheet</button>
+                    <button id="btn-sync" class="btn btn-primary">🔄 Sync Data</button>
                     <button id="btn-send-all" class="btn btn-success">📤 Kirim Reminder Sekarang</button>
                 </div>
             </div>
@@ -83,19 +83,11 @@
             <!-- Settings -->
             <div id="settings" class="page">
                 <div class="card">
-                    <h3>Service Account</h3>
-                    <p class="help-text">Upload file service account JSON untuk mengakses Google Sheets</p>
-                    <div class="upload-area" id="upload-area">
-                        <input type="file" id="file-input" accept=".json" style="display:none">
-                        <button id="btn-upload" class="btn btn-primary">📁 Pilih File JSON</button>
-                        <p id="upload-status" class="status-text"></p>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3>Google Sheet ID</h3>
-                    <input type="text" id="sheet-id-input" placeholder="Masukkan Google Sheet ID">
-                    <button id="btn-save-sheet-id" class="btn btn-primary">Simpan</button>
+                    <h3>Apps Script Web App URL</h3>
+                    <p class="help-text">Masukkan URL deployment dari Apps Script</p>
+                    <input type="text" id="apps-script-url-input" placeholder="https://script.google.com/macros/s/AKfy.../exec">
+                    <button id="btn-save-url" class="btn btn-primary">Simpan URL</button>
+                    <p id="url-status" class="status-text"></p>
                 </div>
 
                 <div class="card">

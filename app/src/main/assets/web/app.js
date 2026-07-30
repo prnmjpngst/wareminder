@@ -94,9 +94,9 @@ async function loadVehicles(search = '') {
                             <td>${v.namaPemilik}</td>
                             <td>${v.nomorHP}</td>
                             <td>${v.masaBerlaku}</td>
-                            <td><span class="badge ${v.done === 'done' ? 'success' : 'warning'}">${v.done === 'done' ? 'Terkirim' : 'Pending'}</span></td>
+                            <td><span class="badge ${v.statusReminder ? 'success' : 'warning'}">${v.statusReminder ? 'Terkirim' : 'Pending'}</span></td>
                             <td>
-                                <button class="btn btn-primary" onclick="sendReminder(${v.rowIndex})" ${v.done === 'done' ? 'disabled' : ''}>
+                                <button class="btn btn-primary" onclick="sendReminder(${v.row})" ${v.statusReminder ? 'disabled' : ''}>
                                     Kirim WA
                                 </button>
                             </td>
@@ -165,85 +165,43 @@ async function loadSettings() {
     try {
         const settings = await api('/settings');
         
-        document.getElementById('sheet-id-input').value = settings.spreadsheetId || '';
+        document.getElementById('apps-script-url-input').value = settings.appsScriptUrl || '';
         document.getElementById('window-start').value = settings.windowStartDay || 3;
         document.getElementById('window-end').value = settings.windowEndDay || 0;
         document.getElementById('schedule-start').value = settings.scheduleStartHour || 8;
         document.getElementById('schedule-end').value = settings.scheduleEndHour || 20;
         document.getElementById('max-per-run').value = settings.maxPerRun || 5;
         
-        // Check service account status
-        const status = await api('/status');
-        const uploadStatus = document.getElementById('upload-status');
-        if (status.sheetsAvailable) {
-            uploadStatus.textContent = '✓ Service account sudah terkonfigurasi';
-            uploadStatus.style.color = '#28a745';
+        // Show URL status
+        const urlStatus = document.getElementById('url-status');
+        if (settings.appsScriptUrl) {
+            urlStatus.textContent = '✓ URL sudah dikonfigurasi';
+            urlStatus.style.color = '#28a745';
         } else {
-            uploadStatus.textContent = '✗ Service account belum dikonfigurasi';
-            uploadStatus.style.color = '#dc3545';
+            urlStatus.textContent = '✗ URL belum dikonfigurasi';
+            urlStatus.style.color = '#dc3545';
         }
     } catch (error) {
         console.error('Failed to load settings:', error);
     }
 }
 
-// Service Account Upload
-document.getElementById('btn-upload').addEventListener('click', () => {
-    document.getElementById('file-input').click();
-});
-
-document.getElementById('file-input').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    if (!file.name.endsWith('.json')) {
-        alert('File harus berformat JSON');
-        return;
-    }
-    
-    const uploadStatus = document.getElementById('upload-status');
-    uploadStatus.textContent = 'Mengupload...';
-    uploadStatus.style.color = '#666';
-    
-    try {
-        const text = await file.text();
-        
-        const response = await fetch('/api/upload-service-account', {
-            method: 'POST',
-            body: text,
-            headers: { 'Content-Type': 'text/plain' }
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-            uploadStatus.textContent = '✓ Service account berhasil diupload!';
-            uploadStatus.style.color = '#28a745';
-            alert('Service account berhasil diupload!');
-        } else {
-            throw new Error(data.error || 'Upload failed');
-        }
-    } catch (error) {
-        uploadStatus.textContent = '✗ Gagal upload: ' + error.message;
-        uploadStatus.style.color = '#dc3545';
-        alert('Gagal upload service account: ' + error.message);
-    }
-});
-
-// Save Sheet ID
-document.getElementById('btn-save-sheet-id').addEventListener('click', async () => {
-    const sheetId = document.getElementById('sheet-id-input').value.trim();
-    if (!sheetId) {
-        alert('Sheet ID tidak boleh kosong');
+// Save Apps Script URL
+document.getElementById('btn-save-url').addEventListener('click', async () => {
+    const url = document.getElementById('apps-script-url-input').value.trim();
+    if (!url) {
+        alert('URL tidak boleh kosong');
         return;
     }
     
     try {
         await api('/settings', {
             method: 'PUT',
-            body: JSON.stringify({ spreadsheetId: sheetId })
+            body: JSON.stringify({ appsScriptUrl: url })
         });
-        alert('Sheet ID berhasil disimpan!');
+        const status = document.getElementById('url-status');
+        status.textContent = '✓ URL disimpan';
+        status.style.color = '#28a745';
     } catch (error) {
         alert('Gagal menyimpan: ' + error.message);
     }

@@ -40,12 +40,6 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            pickFirsts += "/META-INF/DEPENDENCIES"
-            pickFirsts += "/META-INF/INDEX.LIST"
-            pickFirsts += "/META-INF/LICENSE"
-            pickFirsts += "/META-INF/LICENSE.txt"
-            pickFirsts += "/META-INF/NOTICE"
-            pickFirsts += "/META-INF/NOTICE.txt"
             pickFirsts += "/META-INF/io.netty.versions.properties"
         }
     }
@@ -81,10 +75,6 @@ dependencies {
 
     // Networking
     implementation(libs.okhttp)
-    implementation(libs.google.sheets.api)
-    implementation(libs.google.auth.oauth2)
-    implementation(libs.google.http.gson)
-    implementation(libs.google.http.android)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)

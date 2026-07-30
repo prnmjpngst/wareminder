@@ -8,9 +8,6 @@ ktor = "2.3.12"
 okhttp = "4.12.0"
 work = "2.9.0"
 coroutines = "1.8.1"
-sheets = "v4-rev20250603-2.0.0"
-googleAuth = "1.23.0"
-googleHttp = "1.44.2"
 coreKtx = "1.13.1"
 activityKtx = "1.9.0"
 lifecycle = "2.8.3"
@@ -47,10 +44,6 @@ ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref =
 
 # Networking
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
-google-sheets-api = { group = "com.google.apis", name = "google-api-services-sheets", version.ref = "sheets" }
-google-auth-oauth2 = { group = "com.google.auth", name = "google-auth-library-oauth2-http", version.ref = "googleAuth" }
-google-http-gson = { group = "com.google.http-client", name = "google-http-client-gson", version.ref = "googleHttp" }
-google-http-android = { group = "com.google.http-client", name = "google-http-client-android", version.ref = "googleHttp" }
 
 # Coroutines
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }

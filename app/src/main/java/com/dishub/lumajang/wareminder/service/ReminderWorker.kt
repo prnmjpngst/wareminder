@@ -9,7 +9,6 @@ import com.dishub.lumajang.wareminder.data.repository.ReminderRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.Calendar
-import kotlin.random.Random
 
 @HiltWorker
 class ReminderWorker @AssistedInject constructor(
@@ -20,8 +19,6 @@ class ReminderWorker @AssistedInject constructor(
 
     companion object {
         private const val TAG = "ReminderWorker"
-        private const val JEDA_MIN_MS = 10_000L
-        private const val JEDA_MAKS_MS = 40_000L
     }
 
     override suspend fun doWork(): Result {
@@ -30,7 +27,6 @@ class ReminderWorker @AssistedInject constructor(
         val now = Calendar.getInstance()
         val currentHour = now.get(Calendar.HOUR_OF_DAY)
 
-        // Only run during configured hours
         if (currentHour < repository.scheduleStartHour || currentHour > repository.scheduleEndHour) {
             return Result.success()
         }
@@ -38,8 +34,7 @@ class ReminderWorker @AssistedInject constructor(
         Log.d(TAG, "Starting reminder check at ${now.time}")
 
         return try {
-            // Sync fresh data from Google Sheets
-            val syncResult = repository.syncFromSheets()
+            val syncResult = repository.syncFromAppScript()
             if (syncResult.isFailure) {
                 Log.e(TAG, "Sync failed: ${syncResult.exceptionOrNull()?.message}")
             }
@@ -53,29 +48,30 @@ class ReminderWorker @AssistedInject constructor(
                 return Result.success()
             }
 
+            val intentSender = WaIntentSender(applicationContext)
+
             for ((index, vehicle) in batch.withIndex()) {
                 if (!repository.isServiceRunning()) break
 
                 try {
-                    // Launch WA intent
-                    WaIntentSender(applicationContext).send(vehicle)
-                    Thread.sleep(2000) // Wait for WA to open
+                    val message = repository.buildMessage(vehicle)
+                    intentSender.sendOpenChat(vehicle)
+                    Thread.sleep(3000)
 
-                    // Try accessibility auto-send
                     if (WaAutoSendService.hasInstance()) {
-                        WaAutoSendService.sendWithAutoClick {}
+                        WaAutoSendService.sendWithTyping(message)
                     }
+
+                    Thread.sleep((message.length * 150L).coerceAtLeast(5000))
 
                     repository.markSent(vehicle)
-                    Log.d(TAG, "Sent reminder to ${vehicle.nomorKendaraan} (${vehicle.nomorHP})")
+                    Log.d(TAG, "Sent reminder to ${vehicle.noPolisi}")
 
-                    // Random delay between messages
                     if (index < batch.size - 1) {
-                        val delay = JEDA_MIN_MS + Random.nextLong(JEDA_MAKS_MS - JEDA_MIN_MS)
-                        Thread.sleep(delay)
+                        Thread.sleep(30_000L)
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to send to ${vehicle.nomorKendaraan}", e)
+                    Log.e(TAG, "Failed to send to ${vehicle.noPolisi}", e)
                     repository.markFailed(vehicle, e.message ?: "Unknown error")
                 }
             }

@@ -16,15 +16,12 @@ data class PaginatedResponse<T>(
 
 data class StatsResponse(
     val totalVehicles: Int,
-    val expiredVehicles: Int,
     val expiringSoon: Int,
-    val activeVehicles: Int,
     val sentToday: Int = 0,
     val serviceRunning: Boolean,
     val lastSync: Long,
     val lastCheck: Long,
-    val spreadsheetConfigured: Boolean,
-    val sheetsAvailable: Boolean
+    val appsScriptConfigured: Boolean
 )
 
 data class StatusResponse(

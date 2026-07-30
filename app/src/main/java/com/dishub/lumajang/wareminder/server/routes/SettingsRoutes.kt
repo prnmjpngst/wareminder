@@ -4,7 +4,6 @@ import com.dishub.lumajang.wareminder.data.repository.ReminderRepository
 import com.dishub.lumajang.wareminder.server.dto.ApiResponse
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
@@ -25,7 +24,7 @@ class SettingsRoutes @Inject constructor(
 
             get {
                 val settings = mapOf(
-                    "spreadsheetId" to repository.spreadsheetId,
+                    "appsScriptUrl" to repository.appsScriptUrl,
                     "windowStartDay" to repository.windowStartDay,
                     "windowEndDay" to repository.windowEndDay,
                     "scheduleStartHour" to repository.scheduleStartHour,
@@ -40,7 +39,7 @@ class SettingsRoutes @Inject constructor(
                 val type = object : TypeToken<Map<String, Any>>() {}.type
                 val updates: Map<String, Any> = gson.fromJson(body, type)
 
-                updates["spreadsheetId"]?.let { repository.spreadsheetId = it.toString() }
+                updates["appsScriptUrl"]?.let { repository.appsScriptUrl = it.toString() }
                 updates["windowStartDay"]?.let { repository.windowStartDay = (it as Double).toInt() }
                 updates["windowEndDay"]?.let { repository.windowEndDay = (it as Double).toInt() }
                 updates["scheduleStartHour"]?.let { repository.scheduleStartHour = (it as Double).toInt() }
