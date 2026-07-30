@@ -18,8 +18,12 @@
 
   async function loadStats() {
     loading.set(true)
-    const res = await api.getStats()
-    if (res && res.totalVehicles !== undefined) stats.set(res)
+    try {
+      const res = await api.getStats()
+      if (res && res.totalVehicles !== undefined) stats.set(res)
+    } catch (e) {
+      console.error('Stats load failed:', e)
+    }
     loading.set(false)
   }
 </script>

@@ -11,10 +11,14 @@
 
   async function load() {
     loading = true
-    const res = await api.getLogs(page)
-    if (res) {
-      logs = res.data || []
-      total = res.total || 0
+    try {
+      const res = await api.getLogs(page)
+      if (res) {
+        logs = res.data || []
+        total = res.total || 0
+      }
+    } catch (e) {
+      console.error('Logs load failed:', e)
     }
     loading = false
   }

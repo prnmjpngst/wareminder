@@ -16,21 +16,29 @@
   })
 
   async function load() {
-    const [statusRes, logRes] = await Promise.all([
-      api.getStatus(),
-      api.getRecentLogs()
-    ])
-    status = statusRes
-    recentLogs = logRes?.data || []
+    try {
+      const [statusRes, logRes] = await Promise.all([
+        api.getStatus(),
+        api.getRecentLogs()
+      ])
+      status = statusRes
+      recentLogs = logRes?.data || []
+    } catch (e) {
+      console.error('Dashboard load failed:', e)
+    }
   }
 
   async function sendNow() {
     sending = true
     sendResult = null
-    const res = await api.sendAll()
-    sendResult = res
+    try {
+      const res = await api.sendAll()
+      sendResult = res
+      await load()
+    } catch (e) {
+      sendResult = { success: false, error: e.message }
+    }
     sending = false
-    await load()
   }
 
   function fmtTime(ts) {

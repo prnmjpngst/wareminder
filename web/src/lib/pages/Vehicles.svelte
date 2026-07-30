@@ -12,10 +12,14 @@
 
   async function load() {
     loading = true
-    const res = await api.getVehicles(page, search)
-    if (res) {
-      vehicles = res.data || []
-      total = res.total || 0
+    try {
+      const res = await api.getVehicles(page, search)
+      if (res) {
+        vehicles = res.data || []
+        total = res.total || 0
+      }
+    } catch (e) {
+      console.error('Vehicles load failed:', e)
     }
     loading = false
   }
@@ -34,7 +38,11 @@
   }
 
   async function sendOne(row) {
-    await api.sendOne(row)
+    try {
+      await api.sendOne(row)
+    } catch (e) {
+      console.error('Send failed:', e)
+    }
   }
 
   function fmtTime(ts) {

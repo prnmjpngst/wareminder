@@ -19,12 +19,16 @@
   onMount(() => load())
 
   async function load() {
-    const [statusRes, settingsRes] = await Promise.all([
-      api.getStatus(),
-      api.getSettings()
-    ])
-    if (statusRes) status = statusRes
-    if (settingsRes?.data) settings = { ...settings, ...settingsRes.data }
+    try {
+      const [statusRes, settingsRes] = await Promise.all([
+        api.getStatus(),
+        api.getSettings()
+      ])
+      if (statusRes) status = statusRes
+      if (settingsRes?.data) settings = { ...settings, ...settingsRes.data }
+    } catch (e) {
+      console.error('Settings load failed:', e)
+    }
   }
 
   async function doSync() {
