@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WA Reminder Dishub</string>
+    <string name="accessibility_description">Membantu mengirim pesan WhatsApp secara otomatis</string>
+</resources>
