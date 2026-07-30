@@ -26,6 +26,12 @@ class AppsScriptApi @Inject constructor(
             val request = Request.Builder().url(url).get().build()
             val response = client.newCall(request).execute()
             val body = response.body?.string() ?: return@withContext Result.failure(Exception("Empty response"))
+            
+            // Check if response is valid JSON array
+            if (!body.trimStart().startsWith("[")) {
+                return@withContext Result.failure(Exception("Invalid response: ${body.take(100)}"))
+            }
+            
             val listType = object : TypeToken<List<VehicleRaw>>() {}.type
             val raw: List<VehicleRaw> = gson.fromJson(body, listType)
             val vehicles = raw.map { it.toVehicle() }
@@ -41,6 +47,12 @@ class AppsScriptApi @Inject constructor(
             val request = Request.Builder().url(url).get().build()
             val response = client.newCall(request).execute()
             val body = response.body?.string() ?: return@withContext Result.failure(Exception("Empty response"))
+            
+            // Check if response is valid JSON array
+            if (!body.trimStart().startsWith("[")) {
+                return@withContext Result.failure(Exception("Invalid response: ${body.take(100)}"))
+            }
+            
             val listType = object : TypeToken<List<VehicleRaw>>() {}.type
             val raw: List<VehicleRaw> = gson.fromJson(body, listType)
             val vehicles = raw.map { it.toVehicle() }
@@ -56,6 +68,12 @@ class AppsScriptApi @Inject constructor(
             val request = Request.Builder().url(url).get().build()
             val response = client.newCall(request).execute()
             val body = response.body?.string() ?: return@withContext Result.failure(Exception("Empty response"))
+            
+            // Check if response is valid JSON object
+            if (!body.trimStart().startsWith("{")) {
+                return@withContext Result.failure(Exception("Invalid response: ${body.take(100)}"))
+            }
+            
             val stats: ScriptStats = gson.fromJson(body, ScriptStats::class.java)
             Result.success(stats)
         } catch (e: Exception) {

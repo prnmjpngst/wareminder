@@ -161,7 +161,7 @@ class ReminderRepository @Inject constructor(
 
     companion object {
         private const val SCRIPT_URL = "apps_script_url"
-        private const val DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzMGYqVZjX1_G237T8g8RIlejUOboYQcCALdM8Ni154wtZtXd99verrevalnWz9JM83cw/exec"
+        private const val DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbx0hpENWDjBnbzkSfab5M4ZkqA9Kop6AnfZVMhKI0OeDofCuVbfBRkGUbhuRCna4urWvw/exec"
         private const val WINDOW_START = "window_start"
         private const val WINDOW_END = "window_end"
         private const val SCHEDULE_START_HOUR = "schedule_start_hour"
