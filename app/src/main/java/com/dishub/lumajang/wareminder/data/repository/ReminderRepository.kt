@@ -22,7 +22,7 @@ class ReminderRepository @Inject constructor(
         context.getSharedPreferences("reminder_prefs", Context.MODE_PRIVATE)
 
     var appsScriptUrl: String
-        get() = prefs.getString(SCRIPT_URL, "") ?: ""
+        get() = prefs.getString(SCRIPT_URL, DEFAULT_GAS_URL) ?: DEFAULT_GAS_URL
         set(value) = prefs.edit().putString(SCRIPT_URL, value).apply()
 
     var windowStartDay: Int
@@ -161,6 +161,7 @@ class ReminderRepository @Inject constructor(
 
     companion object {
         private const val SCRIPT_URL = "apps_script_url"
+        private const val DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzMGYqVZjX1_G237T8g8RIlejUOboYQcCALdM8Ni154wtZtXd99verrevalnWz9JM83cw/exec"
         private const val WINDOW_START = "window_start"
         private const val WINDOW_END = "window_end"
         private const val SCHEDULE_START_HOUR = "schedule_start_hour"
