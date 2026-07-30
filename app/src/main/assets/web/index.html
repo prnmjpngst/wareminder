@@ -1,13 +1,131 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WA Reminder Dishub</title>
-  <script type="module" crossorigin src="./assets/index-4zedgCIc.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-BK7_Ao32.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WA Reminder - DISHUB Lumajang</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app"></div>
+    <div class="container">
+        <header>
+            <h1>🚗 WA Reminder KIR</h1>
+            <p class="subtitle">DISHUB Kabupaten Lumajang</p>
+        </header>
+
+        <nav>
+            <button class="nav-btn active" data-page="dashboard">Dashboard</button>
+            <button class="nav-btn" data-page="vehicles">Kendaraan</button>
+            <button class="nav-btn" data-page="logs">Logs</button>
+            <button class="nav-btn" data-page="settings">Pengaturan</button>
+        </nav>
+
+        <main>
+            <!-- Dashboard -->
+            <div id="dashboard" class="page active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-total">-</div>
+                        <div class="stat-label">Total Kendaraan</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-expiring">-</div>
+                        <div class="stat-label">Akan Expired</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-sent">-</div>
+                        <div class="stat-label">Terkirim Hari Ini</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Status Layanan</h3>
+                    <div class="status-item">
+                        <span>Service:</span>
+                        <span id="service-status" class="badge">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Accessibility:</span>
+                        <span id="accessibility-status" class="badge">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Sync Terakhir:</span>
+                        <span id="last-sync">-</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Aksi Cepat</h3>
+                    <button id="btn-sync" class="btn btn-primary">🔄 Sync dari Google Sheet</button>
+                    <button id="btn-send-all" class="btn btn-success">📤 Kirim Reminder Sekarang</button>
+                </div>
+            </div>
+
+            <!-- Vehicles -->
+            <div id="vehicles" class="page">
+                <div class="card">
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="Cari kendaraan...">
+                        <button id="btn-search" class="btn btn-primary">Cari</button>
+                    </div>
+                    <div id="vehicles-list" class="table-container"></div>
+                </div>
+            </div>
+
+            <!-- Logs -->
+            <div id="logs" class="page">
+                <div class="card">
+                    <h3>Log Pengiriman</h3>
+                    <div id="logs-list" class="logs-container"></div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div id="settings" class="page">
+                <div class="card">
+                    <h3>Service Account</h3>
+                    <p class="help-text">Upload file service account JSON untuk mengakses Google Sheets</p>
+                    <div class="upload-area" id="upload-area">
+                        <input type="file" id="file-input" accept=".json" style="display:none">
+                        <button id="btn-upload" class="btn btn-primary">📁 Pilih File JSON</button>
+                        <p id="upload-status" class="status-text"></p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Google Sheet ID</h3>
+                    <input type="text" id="sheet-id-input" placeholder="Masukkan Google Sheet ID">
+                    <button id="btn-save-sheet-id" class="btn btn-primary">Simpan</button>
+                </div>
+
+                <div class="card">
+                    <h3>Pengaturan Reminder</h3>
+                    <div class="form-group">
+                        <label>Window Mulai (H-):</label>
+                        <input type="number" id="window-start" value="3" min="0" max="30">
+                    </div>
+                    <div class="form-group">
+                        <label>Window Akhir (H-):</label>
+                        <input type="number" id="window-end" value="0" min="0" max="30">
+                    </div>
+                    <div class="form-group">
+                        <label>Jam Mulai:</label>
+                        <input type="number" id="schedule-start" value="8" min="0" max="23">
+                    </div>
+                    <div class="form-group">
+                        <label>Jam Selesai:</label>
+                        <input type="number" id="schedule-end" value="20" min="0" max="23">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Pesan per Run:</label>
+                        <input type="number" id="max-per-run" value="5" min="1" max="20">
+                    </div>
+                    <button id="btn-save-settings" class="btn btn-primary">Simpan Pengaturan</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>

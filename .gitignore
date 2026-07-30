@@ -9,8 +9,6 @@
 build/
 local.properties
 app/src/main/assets/service_account.json
-web/node_modules/
-web/.svelte-kit/
 .DS_Store
 Thumbs.db
 .env

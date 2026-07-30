@@ -12,6 +12,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.io.File
 import javax.inject.Singleton
 
 @Module
@@ -30,6 +31,14 @@ object NetworkModule {
     @Singleton
     fun provideGoogleCredentials(@ApplicationContext context: Context): GoogleCredentials? {
         return try {
+            // Try uploaded file first
+            val uploadedFile = File(context.filesDir, "service_account.json")
+            if (uploadedFile.exists()) {
+                return GoogleCredentials.fromStream(uploadedFile.inputStream())
+                    .createScoped(listOf("https://www.googleapis.com/auth/spreadsheets"))
+            }
+
+            // Fall back to assets
             val inputStream = context.assets.open("service_account.json")
             GoogleCredentials.fromStream(inputStream)
                 .createScoped(listOf("https://www.googleapis.com/auth/spreadsheets"))

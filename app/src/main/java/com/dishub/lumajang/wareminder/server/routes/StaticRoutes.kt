@@ -24,6 +24,7 @@ class StaticRoutes @Inject constructor(
         routing.get("{path...}") {
             val path = call.parameters["path"] ?: return@get
             if (path.startsWith("api/")) return@get
+            
             val mime = when {
                 path.endsWith(".js") -> ContentType.Application.JavaScript
                 path.endsWith(".css") -> ContentType.Text.CSS
@@ -34,6 +35,7 @@ class StaticRoutes @Inject constructor(
                 path.endsWith(".woff2") -> ContentType("font", "woff2")
                 else -> ContentType.Text.Plain
             }
+            
             serveAsset(path)?.let { data ->
                 call.respondText(data, mime)
             }

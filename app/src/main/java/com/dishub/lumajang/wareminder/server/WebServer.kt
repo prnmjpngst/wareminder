@@ -6,6 +6,7 @@ import com.dishub.lumajang.wareminder.server.routes.LogRoutes
 import com.dishub.lumajang.wareminder.server.routes.SendRoutes
 import com.dishub.lumajang.wareminder.server.routes.SettingsRoutes
 import com.dishub.lumajang.wareminder.server.routes.StaticRoutes
+import com.dishub.lumajang.wareminder.server.routes.UploadRoutes
 import com.dishub.lumajang.wareminder.server.routes.VehicleRoutes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.server.engine.ApplicationEngine
@@ -28,6 +29,7 @@ class WebServer @Inject constructor(
     private val sendRoutes: SendRoutes,
     private val logRoutes: LogRoutes,
     private val settingsRoutes: SettingsRoutes,
+    private val uploadRoutes: UploadRoutes,
     private val staticRoutes: StaticRoutes
 ) {
     companion object {
@@ -63,6 +65,7 @@ class WebServer @Inject constructor(
                     sendRoutes.register(this)
                     logRoutes.register(this)
                     settingsRoutes.register(this)
+                    uploadRoutes.register(this)
                     staticRoutes.register(this)
                 }
             }.start(wait = false)
